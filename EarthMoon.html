@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+				border: 0;
+			}
+			
+			canvas {
+				width: 100%;
+				height: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="native/three.js" type="text/javascript" charset="utf-8"></script>
+		<script src="native/OrbitControls.js" type="text/javascript" charset="utf-8"></script>
+
+		<script src="loaders/CSS2DRenderer.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			var scene = createScene();
+			var camera = createCamera();
+			var textureLoader = new THREE.TextureLoader();
+			var earth = createEarth();
+			var moon = createMoon();
+			var group = creatGroup();
+			scene.add(group);
+			
+			var lights = [];
+			lights[0] = new THREE.PointLight(0xffffff, 1, 0);
+			lights[0].position.set(10, 40, 40);
+
+			scene.add(lights[0]);
+			scene.add(lights[1]);
+			scene.add(lights[2]);
+			// scene.add(sphere);
+
+			var renderer = new THREE.WebGLRenderer(); // 创建渲染器
+			renderer.setSize(window.innerWidth, window.innerHeight); // 设置渲染器宽高
+			document.body.appendChild(renderer.domElement); // 将渲染器添加到页面中
+			camera.lookAt(group.position);
+			// var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+			function creatGroup() {
+				let wrapper = new THREE.Object3D();
+				wrapper.position.set(0, 0, 0);
+
+				wrapper.add(earth);
+				wrapper.add(moon);
+				createPolar(scene)
+
+				//wrapper.rotateY(Math.cos(2));
+				return wrapper;
+			}
+
+			// 创建月球
+			function createMoon() {
+				var geometry = new THREE.SphereGeometry(2, 16, 16);
+				var phoneMaterial = new THREE.MeshPhongMaterial({
+					specular: 0x333333,//specular高亮的程度，越高的值越闪亮。默认值为 30。
+					shininess: 30,//高亮的程度，越高的值越闪亮。默认值为 30
+					map: textureLoader.load('./textures/earth.jpg')
+				});
+				var sphere = new THREE.Mesh(geometry, phoneMaterial);
+				sphere.position.x = 20;
+				sphere.position.y = 0;
+				sphere.position.z = 0;
+				return sphere;
+			}
+
+			// 创建一个球体
+			function createEarth() {
+				var geometry = new THREE.SphereGeometry(12, 16, 16);
+				var phoneMaterial = new THREE.MeshPhongMaterial({
+					specular: 0x333333,//specular高亮的程度，越高的值越闪亮。默认值为 30。
+					shininess: 30,//高亮的程度，越高的值越闪亮。默认值为 30
+					map: textureLoader.load('./textures/earth.jpg')
+				});
+				var lineMaterial = new THREE.LineBasicMaterial({
+					color: 0x00ff00,
+					transparent: true,
+					opacity: 1
+				})
+				var sphere = new THREE.Mesh(geometry, phoneMaterial);
+				console.log('sphere===》', sphere);
+				return sphere;
+			}
+
+			// 绘制一
+			function createPolar(scene) {
+				var axesHelper = new THREE.AxesHelper(60);
+				scene.add(axesHelper);
+			}
+
+			// 创建相机
+			function createCamera() {
+				var camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
+				camera.position.set(10, 40, 20);
+				return camera;
+			}
+
+			// 创建场景
+			function createScene() {
+				var scene = new THREE.Scene();
+				return scene;
+			}
+
+			rotation = 0;
+			var clock = new THREE.Clock()
+
+			function animate() {
+				requestAnimationFrame(animate);
+				var elapsed = clock.getElapsedTime();
+				// 月球 椭圆形旋转
+				moon.position.set(Math.sin(elapsed) * 20, 0, Math.cos(elapsed) * 16);
+				earth.rotateY(0.009);
+				// 渲染
+				renderer.render(scene, camera);
+
+			}
+			console.log(scene);
+			animate();
+
+			var endX = 10;
+			var endY = 10;
+			var mWrapper = document.body;
+			var galleryController = function() {};
+			galleryController.methods = function() {
+				return {
+					move: function() {
+						mWrapper.onmousedown = function(ev) {
+							var e = ev || event;
+							//加入修正  使得获取的点击距离 相对于父窗体
+							var fixX = mWrapper.offsetLeft;
+							var fixY = mWrapper.offsetTop;
+							var startX = e.clientX - fixX;
+							var startY = e.clientY - fixY;
+							mWrapper.onmousemove = function(ev) {
+								var e = ev || event;
+								var moveX = ((e.clientX - fixX) - startX) + endX;
+								var moveY = ((e.clientY - fixY) - startY) + endY;
+								// camera.position.x = moveX / 10;
+								group.rotation.y = moveX / 100;
+								// group.rotation.x = moveX / 100;
+								mWrapper.onmouseup = function() {
+									mWrapper.onmousemove = null;
+									endX = moveX;
+									endY = moveY;
+								}
+							}
+							return false;
+						}
+					},
+					init: function() {
+						this.move();
+					}
+				}
+			}();
+			galleryController.methods.init();
+		</script>
+	</body>
+
+</html>
